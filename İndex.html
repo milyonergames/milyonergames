@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Milyoner Oyunu</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .container {
+      background: #222;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      max-width: 600px;
+      width: 90%;
+    }
+    input, button {
+      padding: 10px;
+      margin: 10px;
+      font-size: 16px;
+      border-radius: 5px;
+    }
+    .choices button {
+      display: block;
+      width: 100%;
+      margin: 10px 0;
+      padding: 15px;
+      font-size: 18px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background: #444;
+      color: #fff;
+    }
+    .choices button:hover { background: #555; }
+    .correct { background: green !important; }
+    .wrong { background: red !important; }
+    .score-box {
+      margin-top: 20px;
+      font-weight: bold;
+      font-size: 18px;
+      color: #0f0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="start-box">
+    <h2>Kim Milyoner Olmak İster?</h2>
+    <p>Lütfen adınızı girin:</p>
+    <input type="text" id="username" placeholder="Adınız">
+    <button onclick="startGame()">Başla</button>
+  </div>
+
+  <div class="container" id="game-box" style="display:none;">
+    <h3 id="welcome"></h3>
+    <div id="question" class="question"></div>
+    <div class="choices">
+      <button id="A" onclick="handleAnswer('A')"></button>
+      <button id="B" onclick="handleAnswer('B')"></button>
+      <button id="C" onclick="handleAnswer('C')"></button>
+      <button id="D" onclick="handleAnswer('D')"></button>
+    </div>
+    <div class="score-box" id="score-box"></div>
+  </div>
+
+  <script>
+    const questions = [
+      {
+        question: "Türkiye'nin başkenti neresidir?",
+        choices: { A: "İstanbul", B: "Ankara", C: "İzmir", D: "Bursa" },
+        answer: "B"
+      },
+      {
+        question: "2 + 2 kaç eder?",
+        choices: { A: "3", B: "4", C: "5", D: "22" },
+        answer: "B"
+      }
+    ];
+
+    const prizeLevels = [
+      0, 500, 1000, 2000, 3000, 5000, 7500, 15000, 30000, 60000, 125000
+    ];
+
+    let currentQuestion = 0;
+    let username = "";
+    let buttonsLocked = false;
+    let score = 0;
+
+    function startGame() {
+      const input = document.getElementById("username").value.trim();
+      if (!input) {
+        alert("Lütfen adınızı girin!");
+        return;
+      }
+      username = input;
+      localStorage.setItem("milyoner_user", username);
+
+      const savedScore = localStorage.getItem("milyoner_score_" + username);
+      score = savedScore ? parseInt(savedScore) : 0;
+
+      document.getElementById("start-box").style.display = "none";
+      document.getElementById("game-box").style.display = "block";
+      document.getElementById("welcome").innerText = "Hoş geldin, " + username + "!";
+      updateScore();
+      loadQuestion();
+    }
+
+    function updateScore() {
+      document.getElementById("score-box").innerText = "Toplam Kazancın: ₺" + score.toLocaleString();
+    }
+
+    function loadQuestion() {
+      if (currentQuestion >= questions.length) {
+        alert(username + ", tebrikler! Tüm soruları doğru bildin. Toplam kazancın: ₺" + score.toLocaleString());
+        return;
+      }
+      const q = questions[currentQuestion];
+      document.getElementById("question").innerText = q.question;
+      for (const key in q.choices) {
+        const btn = document.getElementById(key);
+        btn.innerText = key + ": " + q.choices[key];
+        btn.className = "";
+        btn.disabled = false;
+      }
+      buttonsLocked = false;
+    }
+
+    function handleAnswer(selected) {
+      if (buttonsLocked) return;
+      buttonsLocked = true;
+      const q = questions[currentQuestion];
+      const correct = q.answer;
+
+      for (const key in q.choices) {
+        document.getElementById(key).disabled = true;
+      }
+
+      const selectedBtn = document.getElementById(selected);
+      selectedBtn.classList.add(selected === correct ? "correct" : "wrong");
+
+      if (selected !== correct) {
+        document.getElementById(correct).classList.add("correct");
+      }
+
+      setTimeout(() => {
+        if (selected === correct) {
+          currentQuestion++;
+          score = prizeLevels[currentQuestion];
+          localStorage.setItem("milyoner_score_" + username, score);
+          updateScore();
+          loadQuestion();
+        } else {
+          alert(username + ", yanlış cevap verdin. Toplam kazancın: ₺" + score.toLocaleString());
+        }
+      }, 3000);
+    }
+
+    window.onload = function () {
+      const savedUser = localStorage.getItem("milyoner_user");
+      if (savedUser) {
+        document.getElementById("username").value = savedUser;
+      }
+    };
+  </script>
+</body>
+</html>
